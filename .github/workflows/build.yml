@@ -3,11 +3,17 @@ name: Build APK
 on:
   push:
     branches: [main]
+    paths:
+      - "android/**"
+      - ".github/workflows/build.yml"
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: android
     steps:
       - uses: actions/checkout@v4
 
@@ -30,4 +36,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: chetona-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: android/app/build/outputs/apk/debug/*.apk
