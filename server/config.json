@@ -1,0 +1,18 @@
+{
+  "host": "0.0.0.0",
+  "port": 8765,
+  "tick_interval_seconds": 5,
+  "autosave_every_ticks": 10,
+  "persistence_dir": "./data",
+  "default_population": 8,
+  "llama": {
+    "enabled": false,
+    "endpoint": "http://127.0.0.1:8080/completion",
+    "timeout_seconds": 3
+  },
+  "log_file": "./chetona.log",
+  "rate_limit": {
+    "capacity": 5,
+    "refill_per_second": 0.5
+  }
+}

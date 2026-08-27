@@ -1,0 +1,16 @@
+[Unit]
+Description=Chetona AI civilization server
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=__CHETONA_SERVER_DIR__
+ExecStart=__CHETONA_PYTHON_BIN__ main.py
+Restart=on-failure
+RestartSec=5
+# graceful save-on-exit: main.py already handles SIGTERM by saving all worlds
+TimeoutStopSec=15
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,17 @@
+version: "3.8"
+
+services:
+  chetona:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    ports:
+      - "8765:8765"
+    volumes:
+      - chetona-data:/app/data
+    restart: unless-stopped
+    # server drains SIGTERM by saving all worlds before exit (see main.py)
+    stop_grace_period: 10s
+
+volumes:
+  chetona-data:
