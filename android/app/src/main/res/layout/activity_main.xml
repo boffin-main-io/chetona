@@ -32,6 +32,38 @@
         android:layout_marginTop="8dp"
         android:text="disconnected" />
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="vertical"
+        android:background="#1E1E2E"
+        android:padding="10dp">
+
+        <TextView
+            android:id="@+id/objectiveStage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textStyle="bold"
+            android:textColor="#F2CC8F"
+            android:text="Objective" />
+
+        <TextView
+            android:id="@+id/objectiveDescription"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#DDDDDD"
+            android:textSize="12sp" />
+
+        <ProgressBar
+            android:id="@+id/objectiveProgress"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="8dp"
+            android:layout_marginTop="4dp"
+            android:max="100" />
+    </LinearLayout>
+
     <TextView
         android:id="@+id/factionsHeader"
         android:layout_width="match_parent"

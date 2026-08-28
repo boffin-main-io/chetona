@@ -15,6 +15,7 @@ import time
 
 from agent import Agent, Traits
 from faction import Faction, Ideology
+from objectives import ObjectiveState, evaluate_and_advance
 
 TICK_INTERVAL_SECONDS = 5  # ডেমোর জন্য ছোট রাখা হলো; আসল খেলায় মিনিট/ঘণ্টা হতে পারে
 
@@ -46,6 +47,7 @@ class World:
         # Read-only actions (snapshot, graph) never require it — spectating
         # and being infiltrated don't need permission, only acting does.
         self.owner_token: str = secrets.token_urlsafe(16)
+        self.objective = ObjectiveState()
 
         if _skip_seed:
             self._running = False
@@ -117,6 +119,7 @@ class World:
             agent.tick(self.tick_count, reflection_fn=self.reflection_fn)
 
         self._recompute_faction_cohesion()
+        self.objective = evaluate_and_advance(self.objective, self)
 
     def _recompute_faction_cohesion(self) -> None:
         """cohesion = গোষ্ঠীর মধ্যে গড় সম্পর্ক + গড় loyalty - গড় paranoia।
@@ -207,6 +210,7 @@ class World:
             "avg_self_awareness": round(self.civilization_awareness(), 3),
             "agents": [a.to_public_dict() for a in self.agents.values()],
             "factions": [f.to_public_dict() for f in self.factions.values()],
+            "objective": self.objective.to_public_dict(self),
         }
 
     # ---- multiplayer infiltration (cross-world) --------------------------
@@ -276,6 +280,11 @@ class World:
             "owner_token": self.owner_token,
             "agents": [a.to_state_dict() for a in self.agents.values()],
             "factions": [f.to_state_dict() for f in self.factions.values()],
+            "objective": {
+                "stage": self.objective.stage,
+                "completed_stages": self.objective.completed_stages,
+                "completed_at_tick": self.objective.completed_at_tick,
+            },
         }
 
     @classmethod
@@ -287,4 +296,11 @@ class World:
         world.owner_token = data.get("owner_token") or world.owner_token
         world.factions = {f["id"]: Faction.from_state_dict(f) for f in data.get("factions", [])}
         world.agents = {a["id"]: Agent.from_state_dict(a) for a in data.get("agents", [])}
+        obj_data = data.get("objective")
+        if obj_data:
+            world.objective = ObjectiveState(
+                stage=obj_data.get("stage", 1),
+                completed_stages=obj_data.get("completed_stages", []),
+                completed_at_tick={int(k): v for k, v in obj_data.get("completed_at_tick", {}).items()},
+            )
         return world

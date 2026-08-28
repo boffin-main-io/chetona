@@ -29,6 +29,9 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var agentAdapter: AgentAdapter
     private lateinit var factionAdapter: FactionAdapter
+    private lateinit var objectiveStage: TextView
+    private lateinit var objectiveDescription: TextView
+    private lateinit var objectiveProgress: android.widget.ProgressBar
 
     private lateinit var connection: ChetonaConnection
     private lateinit var prefs: SharedPreferences
@@ -55,6 +58,10 @@ class MainActivity : AppCompatActivity() {
         val factionsRecyclerView = findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.factionsRecyclerView)
         factionsRecyclerView.layoutManager = LinearLayoutManager(this)
         factionsRecyclerView.adapter = factionAdapter
+
+        objectiveStage = findViewById(R.id.objectiveStage)
+        objectiveDescription = findViewById(R.id.objectiveDescription)
+        objectiveProgress = findViewById(R.id.objectiveProgress)
 
         connection = ChetonaConnection(
             onStateChange = ::renderConnectionState,
@@ -173,6 +180,12 @@ class MainActivity : AppCompatActivity() {
         factionAdapter.submitList(snapshot.factions)
         agentAdapter.submitList(snapshot.agents)
         title = "Chetona — ${snapshot.worldId} — tick ${snapshot.tick}"
+
+        snapshot.objective?.let { obj ->
+            objectiveStage.text = "Stage ${obj.stage}: ${obj.stageName}"
+            objectiveDescription.text = obj.description
+            objectiveProgress.progress = (obj.progress * 100).toInt()
+        }
     }
 
     override fun onDestroy() {

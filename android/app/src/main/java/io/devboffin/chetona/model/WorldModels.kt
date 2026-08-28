@@ -78,6 +78,22 @@ data class FactionState(
     }
 }
 
+data class ObjectiveState(
+    val stage: Int,
+    val stageName: String,
+    val description: String,
+    val progress: Double,
+) {
+    companion object {
+        fun fromJson(j: JSONObject) = ObjectiveState(
+            stage = j.optInt("stage", 1),
+            stageName = j.optString("stage_name", ""),
+            description = j.optString("description", ""),
+            progress = j.optDouble("progress", 0.0),
+        )
+    }
+}
+
 data class WorldSnapshot(
     val worldId: String,
     val tick: Int,
@@ -86,6 +102,7 @@ data class WorldSnapshot(
     val avgSelfAwareness: Double,
     val agents: List<AgentState>,
     val factions: List<FactionState>,
+    val objective: ObjectiveState?,
 ) {
     companion object {
         fun fromJson(j: JSONObject): WorldSnapshot {
@@ -93,6 +110,7 @@ data class WorldSnapshot(
             val agents = (0 until agentsJson.length()).map { AgentState.fromJson(agentsJson.getJSONObject(it)) }
             val factionsJson = j.getJSONArray("factions")
             val factions = (0 until factionsJson.length()).map { FactionState.fromJson(factionsJson.getJSONObject(it)) }
+            val objectiveJson = j.optJSONObject("objective")
             return WorldSnapshot(
                 worldId = j.optString("world_id", "default"),
                 tick = j.optInt("tick", 0),
@@ -101,6 +119,7 @@ data class WorldSnapshot(
                 avgSelfAwareness = j.optDouble("avg_self_awareness", 0.0),
                 agents = agents,
                 factions = factions,
+                objective = objectiveJson?.let { ObjectiveState.fromJson(it) },
             )
         }
     }
