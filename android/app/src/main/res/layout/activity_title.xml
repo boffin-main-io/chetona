@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@drawable/bg_app"
+    android:padding="32dp">
+
+    <TextView
+        android:id="@+id/titleGlyph"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="\u25C9"
+        android:textSize="52sp"
+        android:textColor="@color/gold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:text="চেতনা"
+        android:textSize="42sp"
+        style="@style/TitleText" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="CHETONA"
+        android:textColor="@color/text_muted"
+        android:textSize="14sp"
+        android:letterSpacing="0.3" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="18dp"
+        android:text="তুমি ঘাঁটি ভাঙো না, তুমি মন ভাঙো।"
+        android:textColor="@color/text_secondary"
+        android:textStyle="italic"
+        android:textSize="13sp" />
+
+    <View
+        android:layout_width="80dp"
+        android:layout_height="1dp"
+        android:layout_marginTop="28dp"
+        android:layout_marginBottom="28dp"
+        android:background="@color/gold_dim" />
+
+    <Button
+        android:id="@+id/enterButton"
+        android:layout_width="220dp"
+        android:layout_height="52dp"
+        android:background="@drawable/bg_btn_primary"
+        android:text="প্রবেশ করো"
+        style="@style/GameButton"
+        android:elevation="4dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:text="a local AI civilization, slowly waking up"
+        android:textColor="@color/text_muted"
+        android:textSize="11sp" />
+
+</LinearLayout>

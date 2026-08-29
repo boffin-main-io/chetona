@@ -1,13 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@drawable/bg_app"
+    android:fillViewport="true">
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="16dp">
+
+    <TextView
+        style="@style/TitleText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="চেতনা"
+        android:textSize="20sp" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
         android:orientation="horizontal">
 
         <EditText
@@ -15,6 +29,12 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_input_field"
+            android:fontFamily="monospace"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_muted"
+            android:textSize="12sp"
             android:hint="ws://192.168.x.x:8765/?world=alice"
             android:inputType="textUri" />
 
@@ -22,37 +42,47 @@
             android:id="@+id/connectButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Connect" />
+            android:background="@drawable/bg_btn_primary"
+            android:text="Connect"
+            style="@style/GameButton"
+            android:textSize="12sp" />
     </LinearLayout>
 
     <TextView
         android:id="@+id/statusView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="6dp"
+        android:fontFamily="monospace"
+        android:textColor="@color/text_muted"
+        android:textSize="11sp"
         android:text="disconnected" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="14dp"
         android:orientation="vertical"
-        android:background="#1E1E2E"
-        android:padding="10dp">
+        android:background="@drawable/bg_objective_banner"
+        android:padding="14dp">
 
         <TextView
             android:id="@+id/objectiveStage"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="@color/gold"
+            android:fontFamily="sans-serif-condensed"
             android:textStyle="bold"
-            android:textColor="#F2CC8F"
+            android:letterSpacing="0.04"
+            android:textSize="15sp"
             android:text="Objective" />
 
         <TextView
             android:id="@+id/objectiveDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#DDDDDD"
+            android:layout_marginTop="4dp"
+            android:textColor="@color/text_secondary"
             android:textSize="12sp" />
 
         <ProgressBar
@@ -60,44 +90,49 @@
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
             android:layout_height="8dp"
-            android:layout_marginTop="4dp"
+            android:layout_marginTop="8dp"
+            android:progressDrawable="@drawable/progress_objective"
             android:max="100" />
     </LinearLayout>
 
     <TextView
-        android:id="@+id/factionsHeader"
+        style="@style/SectionHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Factions"
-        android:textStyle="bold" />
+        android:layout_marginTop="18dp"
+        android:text="Factions" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/factionsRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="8dp"
         android:nestedScrollingEnabled="false" />
 
     <TextView
-        android:id="@+id/agentsHeader"
+        style="@style/SectionHeader"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:text="Citizens (tap to target)"
-        android:textStyle="bold" />
+        android:layout_marginTop="18dp"
+        android:text="Citizens — tap to target" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/agentsRecyclerView"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:layout_marginTop="4dp" />
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:nestedScrollingEnabled="false" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="18dp"
+        android:layout_marginBottom="14dp"
+        android:background="@color/hairline" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
         android:orientation="horizontal">
 
         <EditText
@@ -105,6 +140,12 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/bg_input_field"
+            android:fontFamily="monospace"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_muted"
+            android:textSize="12sp"
             android:hint="target agent id" />
 
         <EditText
@@ -112,13 +153,17 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="2"
+            android:background="@drawable/bg_input_field"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_muted"
+            android:textSize="12sp"
             android:hint="rumor / whisper text" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="8dp"
         android:orientation="horizontal">
 
         <Button
@@ -126,21 +171,39 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Whisper" />
+            android:layout_marginEnd="6dp"
+            android:background="@drawable/bg_btn_secondary"
+            android:drawableStart="@drawable/ic_whisper"
+            android:drawablePadding="6dp"
+            android:text="Whisper"
+            style="@style/GameButton"
+            android:textSize="12sp" />
 
         <Button
             android:id="@+id/defectionButton"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="Incite Defection" />
+            android:layout_marginStart="6dp"
+            android:background="@drawable/bg_btn_secondary"
+            android:drawableStart="@drawable/ic_defection"
+            android:drawablePadding="6dp"
+            android:text="Incite"
+            style="@style/GameButton"
+            android:textSize="12sp" />
     </LinearLayout>
 
     <Button
         android:id="@+id/graphButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:text="View Relationship Graph" />
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_btn_primary"
+        android:drawableStart="@drawable/ic_graph"
+        android:drawablePadding="8dp"
+        android:text="View Relationship Graph"
+        style="@style/GameButton"
+        android:textSize="12sp" />
 
 </LinearLayout>
+</ScrollView>

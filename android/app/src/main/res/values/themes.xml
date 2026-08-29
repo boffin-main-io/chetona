@@ -1,3 +1,46 @@
 <resources>
-    <style name="Theme.Chetona" parent="Theme.MaterialComponents.DayNight.NoActionBar" />
+    <style name="Theme.Chetona" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="android:windowBackground">@drawable/bg_app</item>
+        <item name="android:statusBarColor">@color/void_black</item>
+        <item name="android:navigationBarColor">@color/void_black</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="colorPrimary">@color/ember_orange</item>
+        <item name="colorAccent">@color/gold</item>
+        <item name="android:textColorPrimary">@color/text_primary</item>
+        <item name="android:textColorSecondary">@color/text_secondary</item>
+    </style>
+
+    <style name="Theme.Chetona.Splash">
+        <item name="android:windowBackground">@drawable/bg_app</item>
+        <item name="android:statusBarColor">@color/void_black</item>
+        <item name="android:navigationBarColor">@color/void_black</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowActionBar">false</item>
+    </style>
+
+    <style name="TitleText">
+        <item name="android:fontFamily">serif</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/gold</item>
+        <item name="android:letterSpacing">0.04</item>
+    </style>
+
+    <style name="SectionHeader">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text_secondary</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textSize">12sp</item>
+    </style>
+
+    <style name="GameButton">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/text_primary</item>
+        <item name="android:letterSpacing">0.06</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:gravity">center</item>
+    </style>
 </resources>

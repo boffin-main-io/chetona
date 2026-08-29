@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- base -->
+    <color name="void_black">#0A0A12</color>
+    <color name="deep_indigo">#12121F</color>
+    <color name="panel_indigo">#1A1A2E</color>
+    <color name="panel_indigo_light">#242440</color>
+    <color name="hairline">#33334D</color>
+
+    <!-- accents -->
+    <color name="ember_orange">#E07A5F</color>
+    <color name="ember_orange_dim">#8A4A38</color>
+    <color name="loom_teal">#81B29A</color>
+    <color name="loom_teal_dim">#4A6B5C</color>
+    <color name="gold">#F2CC8F</color>
+    <color name="gold_dim">#8A7548</color>
+    <color name="warning_red">#E63946</color>
+    <color name="arcane_violet">#9B5DE5</color>
+
+    <!-- text -->
+    <color name="text_primary">#F0EDE5</color>
+    <color name="text_secondary">#A8A6B8</color>
+    <color name="text_muted">#65637A</color>
+
+    <!-- misc -->
+    <color name="transparent">#00000000</color>
+    <color name="scrim">#B30A0A12</color>
+</resources>

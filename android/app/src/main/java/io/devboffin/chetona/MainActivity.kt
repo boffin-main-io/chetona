@@ -178,7 +178,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun renderSnapshot(snapshot: WorldSnapshot) {
         factionAdapter.submitList(snapshot.factions)
-        agentAdapter.submitList(snapshot.agents)
+        agentAdapter.submitList(snapshot.agents, factionAdapter.colorMap())
         title = "Chetona — ${snapshot.worldId} — tick ${snapshot.tick}"
 
         snapshot.objective?.let { obj ->

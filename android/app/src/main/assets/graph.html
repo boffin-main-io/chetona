@@ -4,21 +4,33 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <style>
-  html, body { margin: 0; padding: 0; background: #10101a; overflow: hidden; height: 100%; }
+  @font-face { font-family: system-ui; }
+  html, body { margin: 0; padding: 0; background: #0A0A12; overflow: hidden; height: 100%; }
   canvas { display: block; touch-action: none; }
   #hint {
-    position: absolute; top: 8px; left: 8px; color: #aaa; font: 11px monospace;
+    position: absolute; top: 10px; left: 12px; right: 12px;
+    color: #F0EDE5; font: 12px monospace;
+    background: rgba(26,26,46,0.75); border: 1px solid #33334D; border-radius: 8px;
+    padding: 8px 10px; pointer-events: none;
   }
+  #legend {
+    position: absolute; bottom: 14px; left: 12px;
+    font: 10px sans-serif; color: #A8A6B8;
+    background: rgba(26,26,46,0.75); border: 1px solid #33334D; border-radius: 8px;
+    padding: 8px 10px;
+  }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; }
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
-<div id="hint">tap a node for details</div>
+<div id="hint">tap a citizen for their inner state</div>
+<div id="legend"></div>
 <script>
 /*
- * Chetona relationship graph — dependency-free force-directed layout.
- * এটা কোনো CDN/library লোড করে না, তাই LAN-এ internet ছাড়াও কাজ করে।
- * Android renderGraph(jsonString) কল করে ডেটা পাঠায়।
+ * Chetona relationship graph — dependency-free force-directed layout with
+ * an atmospheric vignette + drifting dust, matching the app's dark theme.
+ * No CDN/library loaded, so it works fully offline on a LAN.
  */
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
@@ -33,13 +45,32 @@ resize();
 let nodes = [];
 let edges = [];
 let factionColors = {};
+let dust = [];
 
-const palette = ['#e07a5f', '#81b29a', '#f2cc8f', '#3d5a80', '#9b5de5', '#f15bb5'];
+const palette = ['#E07A5F', '#81B29A', '#F2CC8F', '#3D5A80', '#9B5DE5', '#F15BB5'];
+
+function initDust() {
+  dust = Array.from({ length: 60 }, () => ({
+    x: Math.random() * W, y: Math.random() * H,
+    r: Math.random() * 1.4 + 0.3,
+    vx: (Math.random() - 0.5) * 0.15,
+    vy: (Math.random() - 0.5) * 0.15,
+    a: Math.random() * 0.4 + 0.08,
+  }));
+}
+initDust();
 
 function renderGraph(jsonString) {
   const data = JSON.parse(jsonString);
   factionColors = {};
-  (data.factions || []).forEach((f, i) => { factionColors[f.id] = palette[i % palette.length]; });
+  const legend = document.getElementById('legend');
+  legend.innerHTML = '';
+  (data.factions || []).forEach((f, i) => {
+    factionColors[f.id] = palette[i % palette.length];
+    const row = document.createElement('div');
+    row.innerHTML = `<span class="dot" style="background:${palette[i % palette.length]}"></span>${f.name}`;
+    legend.appendChild(row);
+  });
 
   nodes = (data.nodes || []).map(n => ({
     ...n,
@@ -54,7 +85,6 @@ function renderGraph(jsonString) {
 }
 
 function step() {
-  // repulsion between all nodes
   for (let i = 0; i < nodes.length; i++) {
     for (let j = i + 1; j < nodes.length; j++) {
       const a = nodes[i], b = nodes[j];
@@ -67,34 +97,53 @@ function step() {
       b.vx -= dx * force; b.vy -= dy * force;
     }
   }
-  // spring along edges, strength/direction depends on affinity
   edges.forEach(e => {
     let dx = e.b.x - e.a.x, dy = e.b.y - e.a.y;
     let dist = Math.sqrt(dx * dx + dy * dy) || 0.01;
-    const targetLen = e.affinity >= 0 ? 90 : 220; // hostile pairs pushed further apart
+    const targetLen = e.affinity >= 0 ? 90 : 220;
     const strength = 0.02 * (0.3 + Math.abs(e.affinity));
     const diff = (dist - targetLen) * strength;
     dx /= dist; dy /= dist;
     e.a.vx += dx * diff; e.a.vy += dy * diff;
     e.b.vx -= dx * diff; e.b.vy -= dy * diff;
   });
-  // center pull + integrate + damping
   nodes.forEach(n => {
     n.vx += (W / 2 - n.x) * 0.001;
     n.vy += (H / 2 - n.y) * 0.001;
     n.vx *= 0.85; n.vy *= 0.85;
     n.x += n.vx; n.y += n.vy;
   });
+  dust.forEach(d => {
+    d.x += d.vx; d.y += d.vy;
+    if (d.x < 0) d.x = W; if (d.x > W) d.x = 0;
+    if (d.y < 0) d.y = H; if (d.y > H) d.y = 0;
+  });
+}
+
+function drawVignette() {
+  const grad = ctx.createRadialGradient(W / 2, H / 2, H * 0.15, W / 2, H / 2, H * 0.75);
+  grad.addColorStop(0, '#14141F');
+  grad.addColorStop(1, '#05050A');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
 }
 
 function draw() {
-  ctx.fillStyle = '#10101a';
-  ctx.fillRect(0, 0, W, H);
+  drawVignette();
+
+  ctx.fillStyle = '#F2CC8F';
+  dust.forEach(d => {
+    ctx.globalAlpha = d.a;
+    ctx.beginPath();
+    ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
 
   edges.forEach(e => {
     ctx.strokeStyle = e.affinity >= 0
-      ? `rgba(129,178,154,${0.2 + Math.abs(e.affinity) * 0.6})`
-      : `rgba(224,122,95,${0.2 + Math.abs(e.affinity) * 0.6})`;
+      ? `rgba(129,178,154,${0.18 + Math.abs(e.affinity) * 0.55})`
+      : `rgba(224,122,95,${0.18 + Math.abs(e.affinity) * 0.55})`;
     ctx.lineWidth = 1 + Math.abs(e.affinity) * 2;
     ctx.beginPath();
     ctx.moveTo(e.a.x, e.a.y);
@@ -103,21 +152,37 @@ function draw() {
   });
 
   nodes.forEach(n => {
-    const r = 8 + n.self_awareness * 10;
+    const r = 8 + n.self_awareness * 12;
+    const color = n.alive ? (factionColors[n.faction_id] || '#65637A') : '#333333';
+
+    // soft glow behind the node, scaled by self-awareness
+    if (n.alive) {
+      const glow = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, r * 2.4);
+      glow.addColorStop(0, color + '55');
+      glow.addColorStop(1, color + '00');
+      ctx.fillStyle = glow;
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, r * 2.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
     ctx.beginPath();
     ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
-    ctx.fillStyle = n.alive ? (factionColors[n.faction_id] || '#888') : '#333';
+    ctx.fillStyle = color;
     ctx.globalAlpha = n.alive ? 1 : 0.4;
     ctx.fill();
     ctx.globalAlpha = 1;
-    ctx.strokeStyle = `rgba(255,80,80,${n.paranoia})`;
-    ctx.lineWidth = 3;
-    ctx.stroke();
 
-    ctx.fillStyle = '#eee';
-    ctx.font = '11px sans-serif';
+    if (n.paranoia > 0.05) {
+      ctx.strokeStyle = `rgba(230,57,70,${Math.min(1, n.paranoia * 2)})`;
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = '#F0EDE5';
+    ctx.font = '600 11px sans-serif';
     ctx.textAlign = 'center';
-    ctx.fillText(n.name, n.x, n.y - r - 4);
+    ctx.fillText(n.name, n.x, n.y - r - 6);
   });
 }
 
@@ -131,10 +196,10 @@ loop();
 canvas.addEventListener('click', (ev) => {
   const rect = canvas.getBoundingClientRect();
   const x = ev.clientX - rect.left, y = ev.clientY - rect.top;
-  const hit = nodes.find(n => Math.hypot(n.x - x, n.y - y) < 20);
+  const hit = nodes.find(n => Math.hypot(n.x - x, n.y - y) < 22);
   document.getElementById('hint').innerText = hit
-    ? `${hit.name} — self-awareness ${hit.self_awareness}, paranoia ${hit.paranoia}`
-    : 'tap a node for details';
+    ? `${hit.name} \u2014 self-awareness ${hit.self_awareness}, paranoia ${hit.paranoia}${hit.alive ? '' : ' \u2014 defected'}`
+    : 'tap a citizen for their inner state';
 });
 </script>
 </body>
