@@ -11,6 +11,7 @@ import io.devboffin.chetona.model.AgentState
 import io.devboffin.chetona.model.WorldSnapshot
 import io.devboffin.chetona.net.ChetonaConnection
 import io.devboffin.chetona.ui.AgentAdapter
+import io.devboffin.chetona.ui.EventAdapter
 import io.devboffin.chetona.ui.FactionAdapter
 import org.json.JSONObject
 import java.util.regex.Pattern
@@ -29,6 +30,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var agentAdapter: AgentAdapter
     private lateinit var factionAdapter: FactionAdapter
+    private lateinit var eventAdapter: EventAdapter
     private lateinit var objectiveStage: TextView
     private lateinit var objectiveDescription: TextView
     private lateinit var objectiveProgress: android.widget.ProgressBar
@@ -37,6 +39,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prefs: SharedPreferences
 
     private var currentWorldId: String = "default"
+    private var lastObjectiveStage: Int? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -62,6 +65,11 @@ class MainActivity : AppCompatActivity() {
         objectiveStage = findViewById(R.id.objectiveStage)
         objectiveDescription = findViewById(R.id.objectiveDescription)
         objectiveProgress = findViewById(R.id.objectiveProgress)
+
+        eventAdapter = EventAdapter()
+        val eventsRecyclerView = findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.eventsRecyclerView)
+        eventsRecyclerView.layoutManager = LinearLayoutManager(this)
+        eventsRecyclerView.adapter = eventAdapter
 
         connection = ChetonaConnection(
             onStateChange = ::renderConnectionState,
@@ -166,6 +174,9 @@ class MainActivity : AppCompatActivity() {
                 val data = json.optJSONObject("data")
                 if (data != null && data.has("graph")) {
                     GraphActivity.start(this, data.getJSONObject("graph").toString())
+                } else if (data != null && data.optBoolean("defected", false)) {
+                    vibrate()
+                    android.widget.Toast.makeText(this, "A citizen has defected.", android.widget.Toast.LENGTH_SHORT).show()
                 } else if (data != null && !data.optBoolean("ok", true)) {
                     statusView.text = "action failed: ${data.optString("error")}"
                 }
@@ -179,12 +190,30 @@ class MainActivity : AppCompatActivity() {
     private fun renderSnapshot(snapshot: WorldSnapshot) {
         factionAdapter.submitList(snapshot.factions)
         agentAdapter.submitList(snapshot.agents, factionAdapter.colorMap())
+        eventAdapter.submitList(snapshot.recentEvents)
         title = "Chetona — ${snapshot.worldId} — tick ${snapshot.tick}"
 
         snapshot.objective?.let { obj ->
+            if (lastObjectiveStage != null && obj.stage > lastObjectiveStage!!) {
+                vibrate()
+                android.widget.Toast.makeText(
+                    this, "Stage advanced: ${obj.stageName}", android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+            lastObjectiveStage = obj.stage
             objectiveStage.text = "Stage ${obj.stage}: ${obj.stageName}"
             objectiveDescription.text = obj.description
             objectiveProgress.progress = (obj.progress * 100).toInt()
+        }
+    }
+
+    private fun vibrate() {
+        val vibrator = getSystemService(VIBRATOR_SERVICE) as? android.os.Vibrator ?: return
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            vibrator.vibrate(android.os.VibrationEffect.createOneShot(180, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+        } else {
+            @Suppress("DEPRECATION")
+            vibrator.vibrate(180)
         }
     }
 

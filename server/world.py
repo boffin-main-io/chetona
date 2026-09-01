@@ -18,6 +18,7 @@ from faction import Faction, Ideology
 from objectives import ObjectiveState, evaluate_and_advance
 
 TICK_INTERVAL_SECONDS = 5  # ডেমোর জন্য ছোট রাখা হলো; আসল খেলায় মিনিট/ঘণ্টা হতে পারে
+MAX_EVENTS = 60  # event log-এর সাইজ ক্যাপ — পুরনো event ধীরে ধীরে বাদ পড়ে
 
 DEFAULT_NAMES = [
     "Amara", "Beno", "Cira", "Dax", "Ely", "Feru", "Goa", "Hiro",
@@ -48,6 +49,9 @@ class World:
         # and being infiltrated don't need permission, only acting does.
         self.owner_token: str = secrets.token_urlsafe(16)
         self.objective = ObjectiveState()
+        # "world pulse" — human-readable event feed so the player can actually
+        # SEE the AI thinking/acting, not just watch numbers move
+        self.recent_events: list[dict] = []
 
         if _skip_seed:
             self._running = False
@@ -78,6 +82,22 @@ class World:
                 same_faction = self.agents[a_id].faction_id == self.agents[b_id].faction_id
                 base = random.uniform(0.0, 0.4) if same_faction else random.uniform(-0.3, 0.1)
                 self.agents[a_id].adjust_relationship(b_id, base)
+
+    # ---- world pulse (event log) ----------------------------------------
+
+    def _log_event(self, kind: str, text: str, agent_name: str | None = None) -> None:
+        """
+        kind: reflection | rumor | defection | faction | infiltration | stage
+        এই feed-টাই player-কে সভ্যতার "ভেতরটা" দেখায় — সংখ্যা নয়, ঘটনা।
+        """
+        self.recent_events.append({
+            "tick": self.tick_count,
+            "kind": kind,
+            "agent_name": agent_name,
+            "text": text,
+        })
+        if len(self.recent_events) > MAX_EVENTS:
+            self.recent_events = self.recent_events[-MAX_EVENTS:]
 
     # ---- simulation loop -----------------------------------------------
 
@@ -116,10 +136,24 @@ class World:
             if agent.faction_id and agent.faction_id in self.factions:
                 faction = self.factions[agent.faction_id]
                 agent.drift_ideology(faction.ideology, self.tick_count)
-            agent.tick(self.tick_count, reflection_fn=self.reflection_fn)
+            reflection = agent.tick(self.tick_count, reflection_fn=self.reflection_fn)
+            if reflection:
+                self._log_event("reflection", reflection, agent_name=agent.name)
 
+        cohesion_before = {fid: f.cohesion for fid, f in self.factions.items()}
         self._recompute_faction_cohesion()
+        for fid, faction in self.factions.items():
+            before = cohesion_before.get(fid, faction.cohesion)
+            after = faction.cohesion
+            if before >= 0.5 > after:
+                self._log_event("faction", f"'{faction.name}'-এর মধ্যে ফাটল স্পষ্ট হতে শুরু করেছে।")
+            elif before >= 0.35 > after:
+                self._log_event("faction", f"'{faction.name}' ভেঙে পড়ার দ্বারপ্রান্তে।")
+
+        stage_before = self.objective.stage
         self.objective = evaluate_and_advance(self.objective, self)
+        if self.objective.stage != stage_before:
+            self._log_event("stage", self.objective.STAGE_DESCRIPTIONS.get(self.objective.stage, ""))
 
     def _recompute_faction_cohesion(self) -> None:
         """cohesion = গোষ্ঠীর মধ্যে গড় সম্পর্ক + গড় loyalty - গড় paranoia।
@@ -151,6 +185,8 @@ class World:
         if not agent:
             return {"ok": False, "error": "agent not found"}
         agent.remember(self.tick_count, "implanted", content, trust_weight=credibility)
+        self._log_event("rumor", f"একটা ফিসফিস {agent.name}-এর মনে গেঁথে গেলো: \u201c{content}\u201d",
+                         agent_name=agent.name)
         return {"ok": True, "agent": agent.to_public_dict()}
 
     def sow_distrust(self, a_id: str, b_id: str, strength: float = 0.3) -> dict:
@@ -161,6 +197,7 @@ class World:
         a.adjust_relationship(b_id, -strength)
         b.adjust_relationship(a_id, -strength)
         a.remember(self.tick_count, "implanted", f"{b.name}-কে আর বিশ্বাস করা যায় না।", trust_weight=strength)
+        self._log_event("rumor", f"{a.name} এখন {b.name}-কে সন্দেহের চোখে দেখছে।", agent_name=a.name)
         return {"ok": True}
 
     def incite_defection(self, agent_id: str, credibility: float = 0.5) -> dict:
@@ -187,6 +224,10 @@ class World:
             agent.faction_id = None
             defected = True
             agent.remember(self.tick_count, "faction", f"{agent.name} নিজের গোষ্ঠী ছেড়ে দিলো।")
+            self._log_event("defection", f"{agent.name} নিজের গোষ্ঠী থেকে সরে দাঁড়ালো — এতদিনের বিশ্বাস ভেঙে গেলো।",
+                             agent_name=agent.name)
+        else:
+            self._log_event("rumor", f"{agent.name}-এর মনে নিজের গোষ্ঠী নিয়ে সন্দেহ জাগছে।", agent_name=agent.name)
         return {"ok": True, "defected": defected, "agent": agent.to_public_dict()}
 
     def civilization_paranoia(self) -> float:
@@ -211,6 +252,7 @@ class World:
             "agents": [a.to_public_dict() for a in self.agents.values()],
             "factions": [f.to_public_dict() for f in self.factions.values()],
             "objective": self.objective.to_public_dict(self),
+            "recent_events": list(reversed(self.recent_events[-20:])),
         }
 
     # ---- multiplayer infiltration (cross-world) --------------------------
@@ -229,6 +271,9 @@ class World:
         effective_credibility = credibility * (0.4 + 0.6 * agent.ideology.openness)
         agent.remember(self.tick_count, "implanted",
                         f"[বহিরাগত ফিসফিস] {content}", trust_weight=effective_credibility)
+        self._log_event("infiltration",
+                         f"অন্য এক সভ্যতা ({other_world.world_id}) থেকে {agent.name}-এর মনে একটা ফিসফিস পৌঁছালো।",
+                         agent_name=agent.name)
         return {
             "ok": True,
             "from_world": other_world.world_id,
@@ -285,6 +330,7 @@ class World:
                 "completed_stages": self.objective.completed_stages,
                 "completed_at_tick": self.objective.completed_at_tick,
             },
+            "recent_events": self.recent_events,
         }
 
     @classmethod
@@ -303,4 +349,5 @@ class World:
                 completed_stages=obj_data.get("completed_stages", []),
                 completed_at_tick={int(k): v for k, v in obj_data.get("completed_at_tick", {}).items()},
             )
+        world.recent_events = data.get("recent_events", [])
         return world

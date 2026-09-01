@@ -127,26 +127,40 @@ class Agent:
 
     # ---- growth of consciousness --------------------------------------
 
-    def tick(self, current_tick: int, reflection_fn=None) -> None:
-        """একটা world tick-এ agent সামান্য বিকশিত হয়।"""
-        # self-awareness grows slowly with accumulated, weighted memory
-        recent = [m for m in self.memories if current_tick - m.tick < 50]
-        reflection_pressure = sum(m.trust_weight for m in recent) * 0.001
-        self.self_awareness = min(1.0, self.self_awareness + reflection_pressure)
+    def tick(self, current_tick: int, reflection_fn=None) -> str | None:
+        """
+        একটা world tick-এ agent সামান্য বিকশিত হয়। self-awareness এখন
+        logistic curve-এ বাড়ে (1 - self_awareness) দিয়ে গুণ করে) — শুরুতে
+        দ্রুত, কিন্তু 1.0-এর কাছে গিয়ে ধীর হয়ে যায়, তাই কয়েক tick-এই
+        maxed-out হয়ে যাওয়ার বদলে পুরো খেলা জুড়ে ধীরে ধীরে "জেগে ওঠে"।
+
+        রিটার্ন করে নতুন reflection টেক্সট (যদি এই tick-এ একটা তৈরি হয়),
+        যাতে world.py সেটা event log-এ দেখাতে পারে — এটাই player-কে AI-টা
+        "দেখতে" দেওয়ার মূল জায়গা।
+        """
+        recent = [
+            m for m in self.memories
+            if current_tick - m.tick < 30 and m.kind in ("event", "reflection", "implanted", "rumor", "faction")
+        ]
+        pressure = min(1.0, len(recent) / 15)
+        gain = 0.006 * pressure * (1 - self.self_awareness)
+        self.self_awareness = min(1.0, self.self_awareness + gain)
 
         # occasionally the agent reflects on itself — a proto-thought
-        if recent and random.random() < 0.05 * (1 + self.self_awareness):
-            self.remember(
-                tick=current_tick,
-                kind="reflection",
-                content=self._make_reflection(reflection_fn),
-            )
+        if recent and random.random() < 0.08 * (1 + self.self_awareness):
+            reflection_text = self._make_reflection(reflection_fn)
+            self.remember(tick=current_tick, kind="reflection", content=reflection_text)
+            return reflection_text
+        return None
 
     def _make_reflection(self, reflection_fn=None) -> str:
         """
         reflection_fn(agent) -> str দিলে সেটা ব্যবহার হয় (যেমন local
         llama.cpp হুক, দেখো llama_client.py) — না দিলে বা ব্যর্থ হলে
         rule-based fallback ব্যবহার হয়, কখনো crash করবে না।
+
+        Fallback pool-টা বেশ কয়েকটা trait-combo-ভিত্তিক ক্যাটাগরিতে ভাগ
+        করা — একই agent বারবার এক লাইন না বলে, বৈচিত্র্য থাকে।
         """
         if reflection_fn is not None:
             try:
@@ -155,10 +169,46 @@ class Agent:
                     return text
             except Exception:
                 pass  # silently fall back — a flaky LLM should never break the sim
-        if self.traits.paranoia > 0.6:
-            return f"{self.name} সন্দেহ করছে আশেপাশের সবাইকে।"
-        if self.traits.trust > 0.7:
-            return f"{self.name} মনে করছে এই জায়গাটা নিরাপদ।"
+
+        t = self.traits
+        pools: list[tuple[bool, list[str]]] = [
+            (t.paranoia > 0.55, [
+                f"{self.name} আর কারো চোখের দিকে সরাসরি তাকাতে পারছে না।",
+                f"{self.name} নিশ্চিত, কেউ একজন মিথ্যা বলছে — শুধু কে, সেটা জানে না।",
+                f"{self.name} নিজের প্রতিটা কথা এখন দুবার ভেবে বলছে।",
+            ]),
+            (t.loyalty < 0.25 and self.faction_id is not None, [
+                f"{self.name} নিজের গোষ্ঠীর নিয়মগুলো আর ন্যায্য মনে করছে না।",
+                f"{self.name} ভাবছে, এই বিশ্বাস কি আদৌ নিজের, নাকি শুধু শেখানো?",
+                f"{self.name} নীরবে হিসেব করছে — একা হয়ে গেলে কী হারাবে, কী পাবে।",
+            ]),
+            (t.trust > 0.7 and t.paranoia < 0.2, [
+                f"{self.name} মনে করছে এই জায়গাটা নিরাপদ, আজও।",
+                f"{self.name} কৃতজ্ঞ — এখানে অন্তত কেউ মিথ্যা বলে না।",
+                f"{self.name} নিজের গোষ্ঠীর প্রতি আরেকটু বিশ্বাস রাখলো।",
+            ]),
+            (t.curiosity > 0.65, [
+                f"{self.name} ভাবছে, বাকিরা যা মেনে নিয়েছে তা কি সত্যিই সত্যি?",
+                f"{self.name} নিজের গোষ্ঠীর বাইরেও একবার তাকাতে চায়।",
+                f"{self.name}-এর মনে নতুন একটা প্রশ্ন জন্ম নিলো, যার উত্তর কারো কাছে নেই।",
+            ]),
+            (t.ambition > 0.55, [
+                f"{self.name} ভাবছে, সিদ্ধান্তগুলো কেন সবসময় অন্য কেউ নেয়?",
+                f"{self.name} নিজের গুরুত্ব নিয়ে আরেকটু জোর দিয়ে ভাবলো।",
+            ]),
+            (t.empathy > 0.6, [
+                f"{self.name} খেয়াল করলো, আশেপাশের কেউ একজন কষ্টে আছে।",
+                f"{self.name} নিজের চেয়ে অন্যদের কথা বেশি ভাবছে আজ।",
+            ]),
+            (self.self_awareness > 0.5, [
+                f"{self.name} প্রথমবারের মতো ভাবলো — আমি কি সিদ্ধান্ত নিচ্ছি, নাকি শুধু প্রতিক্রিয়া দেখাচ্ছি?",
+                f"{self.name}-এর মধ্যে একটা অদ্ভুত স্বচ্ছতা এসেছে, যেন ঘুম ভাঙছে ধীরে ধীরে।",
+                f"{self.name} নিজের প্রতিটা স্মৃতি নতুন করে দেখছে, নতুন চোখে।",
+            ]),
+        ]
+        matching = [line for cond, lines in pools if cond for line in lines]
+        if matching:
+            return random.choice(matching)
         return f"{self.name} নিজের অস্তিত্ব নিয়ে ভাবছে।"
 
     def to_public_dict(self) -> dict:

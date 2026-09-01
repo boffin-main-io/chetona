@@ -94,6 +94,22 @@ data class ObjectiveState(
     }
 }
 
+data class RecentEvent(
+    val tick: Int,
+    val kind: String,
+    val agentName: String?,
+    val text: String,
+) {
+    companion object {
+        fun fromJson(j: JSONObject) = RecentEvent(
+            tick = j.optInt("tick", 0),
+            kind = j.optString("kind", "event"),
+            agentName = if (j.isNull("agent_name")) null else j.optString("agent_name", null),
+            text = j.optString("text", ""),
+        )
+    }
+}
+
 data class WorldSnapshot(
     val worldId: String,
     val tick: Int,
@@ -103,6 +119,7 @@ data class WorldSnapshot(
     val agents: List<AgentState>,
     val factions: List<FactionState>,
     val objective: ObjectiveState?,
+    val recentEvents: List<RecentEvent>,
 ) {
     companion object {
         fun fromJson(j: JSONObject): WorldSnapshot {
@@ -111,6 +128,8 @@ data class WorldSnapshot(
             val factionsJson = j.getJSONArray("factions")
             val factions = (0 until factionsJson.length()).map { FactionState.fromJson(factionsJson.getJSONObject(it)) }
             val objectiveJson = j.optJSONObject("objective")
+            val eventsJson = j.optJSONArray("recent_events")
+            val events = if (eventsJson != null) (0 until eventsJson.length()).map { RecentEvent.fromJson(eventsJson.getJSONObject(it)) } else emptyList()
             return WorldSnapshot(
                 worldId = j.optString("world_id", "default"),
                 tick = j.optInt("tick", 0),
@@ -120,6 +139,7 @@ data class WorldSnapshot(
                 agents = agents,
                 factions = factions,
                 objective = objectiveJson?.let { ObjectiveState.fromJson(it) },
+                recentEvents = events,
             )
         }
     }
