@@ -1,0 +1,8 @@
+# Godot 4 editor cache — always regenerated, never commit
+.godot/
+.import/
+export_presets.cfg
+*.translation
+
+# build output
+/builds/
