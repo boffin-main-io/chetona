@@ -1,22 +1,23 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/Main.gd" id="1_main"]
+[ext_resource type="PackedScene" path="res://scenes/Player.tscn" id="2_player"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_ground"]
-size = Vector2(60, 60)
+size = Vector2(70, 70)
 
 [sub_resource type="StandardMaterial3D" id="Material_ground"]
 albedo_color = Color(0.070588, 0.070588, 0.090196, 1)
 roughness = 0.9
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
-size = Vector3(60, 0.2, 60)
+size = Vector3(70, 0.2, 70)
 
 [sub_resource type="Environment" id="Environment_flat"]
 background_mode = 1
-background_color = Color(0.04, 0.04, 0.07, 1)
+background_color = Color(0.09, 0.11, 0.16, 1)
 ambient_light_source = 2
-ambient_light_color = Color(0.3, 0.3, 0.35, 1)
+ambient_light_color = Color(0.35, 0.35, 0.4, 1)
 ambient_light_energy = 1.0
 
 [node name="Main" type="Node3D"]
@@ -45,7 +46,12 @@ surface_material_override/0 = SubResource("Material_ground")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.1, 0)
 shape = SubResource("BoxShape3D_ground")
 
+[node name="Territories" type="Node3D" parent="."]
+
 [node name="Citizens" type="Node3D" parent="."]
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 
 [node name="UI" type="CanvasLayer" parent="."]
 
@@ -53,13 +59,13 @@ shape = SubResource("BoxShape3D_ground")
 offset_left = 12.0
 offset_top = 12.0
 offset_right = 440.0
-offset_bottom = 160.0
+offset_bottom = 340.0
 
 [node name="VBox" type="VBoxContainer" parent="UI/Panel"]
 offset_left = 10.0
 offset_top = 10.0
 offset_right = 420.0
-offset_bottom = 145.0
+offset_bottom = 325.0
 
 [node name="TitleLabel" type="Label" parent="UI/Panel/VBox"]
 text = "CHETONA — 3D"
@@ -75,7 +81,34 @@ text = "Connect"
 
 [node name="StatusLabel" type="Label" parent="UI/Panel/VBox"]
 text = "disconnected"
+autowrap_mode = 2
 
 [node name="ObjectiveLabel" type="Label" parent="UI/Panel/VBox"]
 text = ""
+autowrap_mode = 2
+
+[node name="HSeparator" type="HSeparator" parent="UI/Panel/VBox"]
+
+[node name="SelectedLabel" type="Label" parent="UI/Panel/VBox"]
+text = "Target: none — click a citizen"
+autowrap_mode = 2
+
+[node name="RumorInput" type="LineEdit" parent="UI/Panel/VBox"]
+custom_minimum_size = Vector2(0, 32)
+placeholder_text = "rumor / whisper text"
+
+[node name="ActionRow" type="HBoxContainer" parent="UI/Panel/VBox"]
+
+[node name="WhisperButton" type="Button" parent="UI/Panel/VBox/ActionRow"]
+custom_minimum_size = Vector2(0, 32)
+size_flags_horizontal = 3
+text = "Whisper"
+
+[node name="InciteButton" type="Button" parent="UI/Panel/VBox/ActionRow"]
+custom_minimum_size = Vector2(0, 32)
+size_flags_horizontal = 3
+text = "Incite Defection"
+
+[node name="MoveHint" type="Label" parent="UI/Panel/VBox"]
+text = "WASD / arrows to move · click a citizen to target"
 autowrap_mode = 2
