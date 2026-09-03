@@ -12,21 +12,23 @@ roughness = 0.9
 [sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
 size = Vector3(60, 0.2, 60)
 
-[sub_resource type="ProceduralSkyMaterial" id="Sky_material"]
-sky_top_color = Color(0.05, 0.05, 0.1, 1)
-sky_horizon_color = Color(0.12, 0.09, 0.16, 1)
-ground_bottom_color = Color(0.03, 0.03, 0.05, 1)
-ground_horizon_color = Color(0.1, 0.08, 0.12, 1)
+[sub_resource type="Environment" id="Environment_flat"]
+background_mode = 1
+background_color = Color(0.04, 0.04, 0.07, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.3, 0.3, 0.35, 1)
+ambient_light_energy = 1.0
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_main")
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_flat")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
 transform = Transform3D(0.8, -0.35, 0.48, 0, 0.81, 0.585, -0.6, -0.468, 0.648, 0, 12, 0)
 light_energy = 1.0
-shadow_enabled = true
+shadow_enabled = false
 
 [node name="Camera3D" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.766, 0.643, 0, -0.643, 0.766, 0, 16, 20)

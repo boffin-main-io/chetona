@@ -4,6 +4,12 @@ extends Node3D
 ## যা Android app-ও ব্যবহার করে (server/main.py দেখো) — সভ্যতার "মস্তিষ্ক"
 ## (agent/faction/objective logic) পুরোপুরি Python সার্ভারে থেকে যায়;
 ## এই client শুধু সেটা 3D-তে দেখায়।
+##
+## নোট: এখানে ইচ্ছাকৃতভাবে "Citizen" কাস্টম টাইপ হিন্ট ব্যবহার করা হয়নি
+## (যেমন `var citizen: Citizen`) — কারণ command line থেকে প্রথমবার
+## প্রজেক্ট চালালে Godot-এর global script class cache তখনো তৈরি হয়নি,
+## তাই class_name resolve করতে পারে না আর "Could not find type Citizen"
+## parse error দেয়। প্লেইন duck-typing ব্যবহার করাই এখানে বেশি নিরাপদ।
 
 var socket := WebSocketPeer.new()
 var connected: bool = false
@@ -94,10 +100,8 @@ func _render_snapshot(data: Dictionary) -> void:
 		var agent: Dictionary = agents[i]
 		var id: String = agent["id"]
 
-		var citizen: Citizen
-		if citizens.has(id):
-			citizen = citizens[id]
-		else:
+		var citizen = citizens.get(id)
+		if citizen == null:
 			citizen = citizen_scene.instantiate()
 			citizens_root.add_child(citizen)
 			citizens[id] = citizen
